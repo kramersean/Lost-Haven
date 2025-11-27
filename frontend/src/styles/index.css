@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-night text-white min-h-screen;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.card {
+  @apply bg-gunmetal rounded-xl p-4 shadow-glow border border-neon-purple/20;
+}
+
+.button-primary {
+  @apply px-4 py-2 rounded-md bg-neon-purple text-white hover:bg-neon-purple/80 transition;
+}
