@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  username         String            @unique
+  email            String            @unique
+  passwordHash     String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  boss             Boss?
+  inventoryItems   InventoryItem[]
+  propertyOwnerships PropertyOwnership[]
+  combatSessions   CombatSession[]
+}
+
+model Boss {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  name            String
+  level           Int      @default(1)
+  experience      Int      @default(0)
+  cash            Int      @default(500)
+  streetCred      Int      @default(0)
+  heat            Int      @default(0)
+  energy          Int      @default(100)
+  maxEnergy       Int      @default(100)
+  lastEnergyAt    DateTime @default(now())
+  statPoints      Int      @default(0)
+  strength        Int      @default(5)
+  cunning         Int      @default(5)
+  charisma        Int      @default(5)
+  tech            Int      @default(5)
+  weaponId        Int?
+  armorId         Int?
+  accessoryOneId  Int?
+  accessoryTwoId  Int?
+
+  user            User     @relation(fields: [userId], references: [id])
+  weapon          Item?    @relation("WeaponEquip", fields: [weaponId], references: [id])
+  armor           Item?    @relation("ArmorEquip", fields: [armorId], references: [id])
+  accessoryOne    Item?    @relation("AccessoryOneEquip", fields: [accessoryOneId], references: [id])
+  accessoryTwo    Item?    @relation("AccessoryTwoEquip", fields: [accessoryTwoId], references: [id])
+}
+
+model Item {
+  id             Int              @id @default(autoincrement())
+  name           String
+  type           String
+  rarity         String
+  statBonuses    Json
+  dpsBonus       Int      @default(0)
+  levelRequirement Int    @default(1)
+  buyPrice       Int
+  sellPrice      Int
+
+  bossesWeapon    Boss[]  @relation("WeaponEquip")
+  bossesArmor     Boss[]  @relation("ArmorEquip")
+  bossesAccessoryOne Boss[] @relation("AccessoryOneEquip")
+  bossesAccessoryTwo Boss[] @relation("AccessoryTwoEquip")
+  inventoryItems  InventoryItem[]
+  enemyDrop       Enemy[]
+}
+
+model InventoryItem {
+  id        Int   @id @default(autoincrement())
+  userId    Int
+  itemId    Int
+  quantity  Int   @default(1)
+
+  user      User  @relation(fields: [userId], references: [id])
+  item      Item  @relation(fields: [itemId], references: [id])
+
+  @@unique([userId, itemId])
+}
+
+model CrimeTemplate {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  description        String
+  difficulty         Int
+  energyCost         Int
+  recommendedStats   Json
+  baseRewardCash     Int
+  baseRewardStreetCred Int
+  baseHeatGain       Int
+  failurePenalty     Json
+}
+
+model Enemy {
+  id             Int     @id @default(autoincrement())
+  name           String
+  level          Int
+  maxHealth      Int
+  baseDps        Int
+  cashReward     Int
+  xpReward       Int
+  dropItemId     Int?
+  dropRate       Float   @default(0)
+
+  dropItem       Item?   @relation(fields: [dropItemId], references: [id])
+  combatSessions CombatSession[]
+}
+
+model CombatSession {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  enemyId         Int
+  bossCurrentHp   Int
+  enemyCurrentHp  Int
+  bossEffectiveDps Int
+  enemyEffectiveDps Int
+  status          String
+  createdAt       DateTime @default(now())
+  log             Json
+
+  user            User     @relation(fields: [userId], references: [id])
+  enemy           Enemy    @relation(fields: [enemyId], references: [id])
+}
+
+model PropertyTemplate {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  type                String
+  basePurchaseCost    Int
+  baseIncomePerMinute Int
+  baseStreetCredPerMinute Int
+  baseHeatPerMinute   Int
+  unlockLevel         Int
+  unlockStreetCred    Int
+
+  ownerships          PropertyOwnership[]
+}
+
+model PropertyOwnership {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  propertyId      Int
+  upgradeLevel    Int      @default(1)
+  lastCollectedAt DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id])
+  property        PropertyTemplate @relation(fields: [propertyId], references: [id])
+}
